@@ -4,6 +4,7 @@
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/completion.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>
 #include <linux/mm.h>
@@ -30,6 +31,18 @@
 #include <linux/lenovo-bl-booster.h>
 #endif
 extern bool nvt_gesture_flag;
+#if IS_ENABLED(CONFIG_TOUCHSCREEN_NT36XXX_SPI)
+/*
+ * The NT36xxx touch controller shares the panel reset, so its firmware is
+ * lost whenever the panel is reset. The touch driver only downloads firmware
+ * once at probe; afterwards the panel enable path must ask for a reload.
+ * Matches the stock msm_drm.ko dsi_panel_enable() behaviour (KIRBYU-3835).
+ */
+extern bool dsi_panel_enable_flag;
+extern bool nvt_ts_probe_flag;
+extern void nvt_nvt_update_firmware_work(struct completion *load_fw_completion);
+static struct completion load_fw_completion;
+#endif
 /**
  * topology is currently defined by a set of following 3 values:
  * 1. num of layer mixers
@@ -5394,6 +5407,14 @@ int dsi_panel_enable(struct dsi_panel *panel)
 		DSI_ERR("Invalid params\n");
 		return -EINVAL;
 	}
+
+#if IS_ENABLED(CONFIG_TOUCHSCREEN_NT36XXX_SPI)
+	if (dsi_panel_enable_flag) {
+		init_completion(&load_fw_completion);
+		nvt_nvt_update_firmware_work(&load_fw_completion);
+		nvt_ts_probe_flag = false;
+	}
+#endif
 
 	mutex_lock(&panel->panel_lock);
 
