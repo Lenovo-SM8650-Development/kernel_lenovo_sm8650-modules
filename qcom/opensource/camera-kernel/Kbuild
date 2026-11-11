@@ -325,3 +325,15 @@ camera-y += drivers/camera_main.o
 
 obj-m += camera.o
 BOARD_VENDOR_KERNEL_MODULES += $(KERNEL_MODULES_OUT)/camera.ko
+
+# Lenovo Kirby external CCI camera LDO support.
+camera-$(CONFIG_ARCH_KIRBY) += drivers/cam_power/cam_power_dev.o
+
+# Generate the banner in the module output tree: Android mounts source read-only.
+ccflags-y += -I$(obj)
+CAMERA_BANNER_INPUTS := $(shell find $(src)/drivers -type f \( -name '*.c' -o -name '*.h' \))
+$(obj)/drivers/camera_main.o: $(obj)/cam_build_banner.h
+$(obj)/cam_build_banner.h: $(CAMERA_BANNER_INPUTS) $(src)/Kbuild $(src)/Makefile
+	@echo '#define CAMERA_COMPILE_TIME "$(if $(KBUILD_BUILD_TIMESTAMP),$(KBUILD_BUILD_TIMESTAMP),$(shell date))"' > $@
+	@echo '#define CAMERA_COMPILE_BY "$(KBUILD_BUILD_USER)"' >> $@
+	@echo '#define CAMERA_COMPILE_HOST "$(KBUILD_BUILD_HOST)"' >> $@

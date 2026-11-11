@@ -10,6 +10,7 @@
 #include "cam_packet_util.h"
 #include "cam_mem_mgr.h"
 #include "cam_res_mgr_api.h"
+#include "../../cam_power/cam_power_dev.h"
 
 #define CAM_SENSOR_PINCTRL_STATE_SLEEP "cam_suspend"
 #define CAM_SENSOR_PINCTRL_STATE_DEFAULT "cam_default"
@@ -2325,6 +2326,14 @@ int cam_sensor_core_power_up(struct cam_sensor_power_ctrl_t *ctrl,
 				goto power_up_failed;
 			}
 			break;
+#if IS_ENABLED(CONFIG_ARCH_KIRBY)
+		case SENSOR_WL2868C_LDO1 ... SENSOR_WL2868C_LDO2_1P1:
+			rc = cam_kirby_ldo_power(power_setting->seq_type -
+					SENSOR_WL2868C_LDO1, true);
+			if (rc)
+				goto power_up_failed;
+			break;
+#endif
 		default:
 			CAM_ERR(CAM_SENSOR_UTIL, "error power seq type %d",
 				power_setting->seq_type);
@@ -2424,6 +2433,14 @@ power_up_failed:
 				gpio_num_info, GPIOF_OUT_INIT_LOW);
 
 			break;
+#if IS_ENABLED(CONFIG_ARCH_KIRBY)
+		case SENSOR_WL2868C_LDO1 ... SENSOR_WL2868C_LDO2_1P1:
+			ret = cam_kirby_ldo_power(power_setting->seq_type -
+					SENSOR_WL2868C_LDO1, false);
+			if (ret)
+				CAM_ERR(CAM_SENSOR_UTIL, "LDO rollback failed: %d", ret);
+			break;
+#endif
 		default:
 			CAM_ERR(CAM_SENSOR_UTIL, "error power seq type %d",
 				power_setting->seq_type);
@@ -2594,6 +2611,14 @@ int cam_sensor_util_power_down(struct cam_sensor_power_ctrl_t *ctrl,
 				CAM_ERR(CAM_SENSOR_UTIL,
 					"Error disabling VREG GPIO");
 			break;
+#if IS_ENABLED(CONFIG_ARCH_KIRBY)
+		case SENSOR_WL2868C_LDO1 ... SENSOR_WL2868C_LDO2_1P1:
+			ret = cam_kirby_ldo_power(pd->seq_type -
+					SENSOR_WL2868C_LDO1, false);
+			if (ret)
+				CAM_ERR(CAM_SENSOR_UTIL, "LDO power down failed: %d", ret);
+			break;
+#endif
 		default:
 			CAM_ERR(CAM_SENSOR_UTIL, "error power seq type %d",
 				pd->seq_type);

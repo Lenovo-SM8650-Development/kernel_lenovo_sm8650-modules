@@ -11,6 +11,10 @@
 #include <linux/i2c.h>
 #include <linux/component.h>
 
+#if IS_ENABLED(CONFIG_ARCH_KIRBY)
+extern struct platform_driver cam_kirby_power_platform_driver;
+#endif
+
 extern struct platform_driver cam_sync_driver;
 extern struct platform_driver cam_smmu_driver;
 extern struct platform_driver cam_cpas_driver;
@@ -108,6 +112,9 @@ static struct platform_driver *const cam_component_platform_drivers[] = {
 #ifdef CONFIG_SPECTRA_SENSOR
 	&cam_res_mgr_driver,
 	&cci_driver,
+#if IS_ENABLED(CONFIG_ARCH_KIRBY)
+	&cam_kirby_power_platform_driver,
+#endif
 	&csiphy_driver,
 	&cam_actuator_platform_driver,
 	&cam_sensor_platform_driver,

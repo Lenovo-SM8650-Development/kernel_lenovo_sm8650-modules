@@ -60,9 +60,10 @@
 #include "cam_tfe_csid.h"
 #include "cam_csid_ppi100.h"
 #include "camera_main.h"
+#include "cam_power/cam_power_dev.h"
 
 #ifndef CAMERA_COMPILE_BY
-#include "cam_generated_h"
+#include "cam_build_banner.h"
 #endif
 
 char camera_banner[] = "Camera-Banner: (" CAMERA_COMPILE_BY "@"
@@ -115,6 +116,9 @@ static const struct camera_submodule_component camera_sensor[] = {
 #ifdef CONFIG_SPECTRA_SENSOR
 	{&cam_res_mgr_init, &cam_res_mgr_exit},
 	{&cam_cci_init_module, &cam_cci_exit_module},
+#if IS_ENABLED(CONFIG_ARCH_KIRBY)
+	{&cam_kirby_power_driver_init, &cam_kirby_power_driver_exit},
+#endif
 	{&cam_csiphy_init_module, &cam_csiphy_exit_module},
 	{&cam_tpg_init_module, &cam_tpg_exit_module},
 	{&cam_actuator_driver_init, &cam_actuator_driver_exit},
