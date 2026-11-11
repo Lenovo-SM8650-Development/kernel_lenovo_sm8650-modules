@@ -5377,9 +5377,16 @@ int sde_encoder_vid_wait_for_active(
 		if (!phys || (phys->ops.is_master && !phys->ops.is_master(phys)))
 			continue;
 		mode = phys->cached_mode;
+#if IS_ENABLED(CONFIG_ARCH_KIRBY)
+		/* CN .298 waits within this window before the porch change. */
+		min_ln_cnt = mode.vsync_end - mode.vsync_start;
+		active_mark_region = mode.vtotal - mode.vsync_start +
+			(mode.vdisplay * 3) / 4;
+#else
 		min_ln_cnt = (mode.vtotal - mode.vsync_start) +
 			(mode.vsync_end - mode.vsync_start);
 		active_mark_region = mode.vdisplay + min_ln_cnt - mode.vdisplay / 4;
+#endif
 		while (retry) {
 			ln_cnt = phys->ops.get_line_count(phys);
 			if ((ln_cnt > min_ln_cnt) && (ln_cnt < active_mark_region))
@@ -5391,6 +5398,14 @@ int sde_encoder_vid_wait_for_active(
 	return -EINVAL;
 }
 
+#if IS_ENABLED(CONFIG_ARCH_KIRBY)
+static bool kirby_same_touch_timing(u32 old_fps, u32 new_fps)
+{
+	return (old_fps == 30 || old_fps == 60 || old_fps == 120) &&
+		(new_fps == 30 || new_fps == 60 || new_fps == 120);
+}
+#endif
+
 void sde_encoder_kickoff(struct drm_encoder *drm_enc, bool config_changed)
 {
 	struct sde_encoder_virt *sde_enc;
@@ -5401,6 +5416,11 @@ void sde_encoder_kickoff(struct drm_encoder *drm_enc, bool config_changed)
 	struct dsi_bridge *c_bridge = NULL;
 	struct dsi_display *dsi_display = NULL;
 	struct dsi_display_mode adj_mode;
+#if IS_ENABLED(CONFIG_ARCH_KIRBY)
+	static u32 old_fps;
+	u32 adj_fps = 0;
+	bool kirby_vrr = false;
+#endif
 
 	if (!drm_enc) {
 		SDE_ERROR("invalid encoder\n");
@@ -5447,14 +5467,13 @@ void sde_encoder_kickoff(struct drm_encoder *drm_enc, bool config_changed)
 		dsi_display = c_bridge->display;
 	}
 #if IS_ENABLED(CONFIG_ARCH_KIRBY)
-	if (dsi_display && dsi_display->panel && (adj_mode.dsi_mode_flags & DSI_MODE_FLAG_VRR)) {
+	kirby_vrr = dsi_display && dsi_display->panel &&
+		(adj_mode.dsi_mode_flags & DSI_MODE_FLAG_VRR);
+	if (kirby_vrr) {
 		mutex_lock(&dsi_display->panel->panel_lock);
-		//sde_encoder_wait_for_event(drm_enc,MSM_ENC_VBLANK);
-		sde_encoder_vid_wait_for_active(drm_enc);
-		dsi_panel_match_fps_pen_setting(dsi_display->panel, &adj_mode, 1);
-		sde_encoder_wait_for_event(drm_enc,MSM_ENC_VBLANK);
-		sde_encoder_vid_wait_for_active(drm_enc);
-
+		adj_fps = adj_mode.timing.refresh_rate;
+		if (!kirby_same_touch_timing(old_fps, adj_fps))
+			sde_encoder_vid_wait_for_active(drm_enc);
 	}
 #elif IS_ENABLED(CONFIG_ARCH_LAPIS)
 	if (dsi_display && dsi_display->panel && (adj_mode.dsi_mode_flags & DSI_MODE_FLAG_VRR)) {
@@ -5476,14 +5495,20 @@ void sde_encoder_kickoff(struct drm_encoder *drm_enc, bool config_changed)
 			phys->ops.handle_post_kickoff(phys);
 	}
 #if IS_ENABLED(CONFIG_ARCH_KIRBY)
-	if (dsi_display && dsi_display->panel && (adj_mode.dsi_mode_flags & DSI_MODE_FLAG_VRR)) {
-		dsi_panel_match_fps_pen_setting(dsi_display->panel, &adj_mode,2);
-
-		if ( adj_mode.timing.refresh_rate == 144 || adj_mode.timing.refresh_rate == 165 || adj_mode.timing.refresh_rate == 90) {
-			sde_encoder_wait_for_event(drm_enc,MSM_ENC_VBLANK);
-			sde_encoder_vid_wait_for_active(drm_enc);
-			dsi_panel_match_fps_pen_setting(dsi_display->panel, &adj_mode,3);
+	if (kirby_vrr) {
+		if (!kirby_same_touch_timing(old_fps, adj_fps)) {
+			/* Stock schedules the switch after kickoff, in the old
+			 * low-rate porch, then restores the default DMA line.
+			 */
+			if (old_fps == 30)
+				dsi_display_update_dma_sched_line(dsi_display, 6000);
+			else if (old_fps == 60)
+				dsi_display_update_dma_sched_line(dsi_display, 1800);
+			dsi_panel_match_fps_pen_setting(dsi_display->panel,
+					&adj_mode, 1);
+			dsi_display_update_dma_sched_line(dsi_display, 1);
 		}
+		old_fps = adj_fps;
 		mutex_unlock(&dsi_display->panel->panel_lock);
 	}
 #elif IS_ENABLED(CONFIG_ARCH_LAPIS)

@@ -861,4 +861,8 @@ int dsi_display_get_panel_scan_line(void *display, u16 *scan_line, ktime_t *scan
  */
 void dsi_display_report_dead(struct dsi_display *display);
 
+#if IS_ENABLED(CONFIG_ARCH_KIRBY)
+void dsi_display_update_dma_sched_line(struct dsi_display *display, u32 line);
+#endif
+
 #endif /* _DSI_DISPLAY_H_ */

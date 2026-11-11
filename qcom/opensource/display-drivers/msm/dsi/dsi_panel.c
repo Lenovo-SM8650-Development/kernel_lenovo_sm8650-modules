@@ -5613,47 +5613,59 @@ error:
 	return rc;
 }
 #if IS_ENABLED(CONFIG_ARCH_KIRBY)
+/* Match the CN .298 TDDI command sequence, not the older three-stage flow. */
 int dsi_panel_match_fps_pen_setting(struct dsi_panel *panel,
-                struct dsi_display_mode *adj_mode,int stages)
+		struct dsi_display_mode *adj_mode, int stages)
 {
-	int rc =0;
+	static bool tp_timing_disable;
+	int rc = 0;
+	enum dsi_cmd_set_type type;
 
-	if (!panel || !panel->cur_mode || !adj_mode) {
-		DSI_ERR("invalid params\n");
+	if (!panel || !panel->cur_mode || !adj_mode)
 		return -EAGAIN;
-	}
+
+	/* The caller holds panel_lock across the refresh-rate transition. */
 	switch (stages) {
-		case 1: //N - 1
-			if (adj_mode->timing.refresh_rate == 144 || adj_mode->timing.refresh_rate == 165 || adj_mode->timing.refresh_rate == 90) {
-				rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_PEN_DISABLE_CONTROL);
-			} else {
-				rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_PEN_OTHERS_ENABLE_CONTROL);
-			}
+	case 1:
+		switch (adj_mode->timing.refresh_rate) {
+		case 165:
+			type = DSI_CMD_SET_DISP_PEN_165HZ_SWITCH;
 			break;
-		case 2: //N, cmd + porch
-			 if (adj_mode->timing.refresh_rate == 165) {
-				rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_PEN_165HZ_SWITCH);
-			 } else if (adj_mode->timing.refresh_rate == 144) {
-				rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_PEN_144HZ_SWITCH);
-			 } else  if (adj_mode->timing.refresh_rate == 90) {
-				rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_PEN_90HZ_SWITCH);
-			 }  else {
-				 rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_PEN_OTHERS_SWITCH);
-			 }
-			 break;
-		case 3: //N + 1
-			 rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_PEN_ENABLE_TOUCH);
-			 break;
+		case 144:
+			type = DSI_CMD_SET_DISP_PEN_144HZ_SWITCH;
+			break;
+		case 90:
+			type = DSI_CMD_SET_DISP_PEN_90HZ_SWITCH;
+			break;
+		case 30:
+		case 60:
+		case 120:
+			rc = dsi_panel_tx_cmd_set(panel,
+					DSI_CMD_SET_DISP_PEN_OTHERS_SWITCH);
+			goto done;
 		default:
-			pr_info("dsi: wrong stages = %d\n", stages);
+			return 0;
+		}
+		rc = dsi_panel_tx_cmd_set(panel, type);
+		tp_timing_disable = true;
+		break;
+	case 2:
+		if (tp_timing_disable) {
+			rc = dsi_panel_tx_cmd_set(panel,
+					DSI_CMD_SET_DISP_PEN_ENABLE_TOUCH);
+			tp_timing_disable = false;
+		}
+		break;
+	default:
+		return -EINVAL;
 	}
-
+done:
 	if (rc) {
-		DSI_ERR("Failed to send DSI_CMD_SET_DISP_PEN_120HZ command\n");
+		DSI_ERR("TDDI fps=%u stage=%d command failed, rc=%d\n",
+			adj_mode->timing.refresh_rate, stages, rc);
 		return -EAGAIN;
 	}
-	return rc;
-
+	return 0;
 }
 #elif IS_ENABLED(CONFIG_ARCH_LAPIS)
 int dsi_panel_match_fps_setting(struct dsi_panel *panel,

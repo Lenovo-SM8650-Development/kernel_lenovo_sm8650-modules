@@ -1876,6 +1876,20 @@ error:
 	return len;
 }
 
+#if IS_ENABLED(CONFIG_ARCH_KIRBY)
+void dsi_display_update_dma_sched_line(struct dsi_display *display, u32 line)
+{
+	int i;
+
+	display_for_each_ctrl(i, display) {
+		struct dsi_ctrl *ctrl = display->ctrl[i].ctrl;
+
+		if (ctrl)
+			ctrl->host_config.common_config.dma_sched_line = line;
+	}
+}
+#endif
+
 static ssize_t debugfs_update_cmd_scheduling_params(struct file *file,
 				  const char __user *user_buf,
 				  size_t user_len,
@@ -5101,24 +5115,28 @@ static int dsi_display_get_dfps_timing(struct dsi_display *display,
 
 	DSI_INFO("the current refresh rate is %d\n", timing->refresh_rate);
 #if IS_ENABLED(CONFIG_ARCH_KIRBY)
+	/* CN .298 TDDI timings, recovered from the stock display module.
+	 * The imported source used HFP 70/178/350, which differs from
+	 * the stock scan timings during dynamic mode changes.
+	 */
 	if (timing->refresh_rate == 165) {
 		adj_mode->timing.v_front_porch = 30;
-		adj_mode->timing.h_front_porch = 70;
+		adj_mode->timing.h_front_porch = 226;
 	} else if (timing->refresh_rate == 144) {
 		adj_mode->timing.v_front_porch = 30;
-		adj_mode->timing.h_front_porch = 178;
+		adj_mode->timing.h_front_porch = 358;
 	} else if (timing->refresh_rate == 90) {
 		adj_mode->timing.v_front_porch = 1740;
-		adj_mode->timing.h_front_porch = 178;
+		adj_mode->timing.h_front_porch = 358;
 	} else if (timing->refresh_rate == 120) {
 		adj_mode->timing.v_front_porch = 30;
-		adj_mode->timing.h_front_porch = 350;
+		adj_mode->timing.h_front_porch = 566;
 	} else if (timing->refresh_rate == 60) {
 		adj_mode->timing.v_front_porch = 2880;
-		adj_mode->timing.h_front_porch = 350;
+		adj_mode->timing.h_front_porch = 566;
 	} else if (timing->refresh_rate == 30) {
 		adj_mode->timing.v_front_porch = 8580;
-		adj_mode->timing.h_front_porch = 350;
+		adj_mode->timing.h_front_porch = 566;
 	} else {
 		switch (dfps_caps.type) {
 		case DSI_DFPS_IMMEDIATE_VFP:
