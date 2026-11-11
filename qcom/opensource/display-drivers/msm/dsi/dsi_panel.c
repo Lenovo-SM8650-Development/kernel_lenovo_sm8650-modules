@@ -2046,7 +2046,7 @@ const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-dispparam-pen-disable-control-command-state",
 	"qcom,mdss-dsi-dispparam-pen-144hz-switch-command-state",
 	"qcom,mdss-dsi-dispparam-pen-165hz-switch-command-state",
-	"qcom,mdss-dsi-dispparam-pen-190hz-switch-command-state",
+	"qcom,mdss-dsi-dispparam-pen-90hz-switch-command-state",
 	"qcom,mdss-dsi-dispparam-pen-enable-touch-command-state",
 	"qcom,mdss-dsi-dispparam-pen-others-enable-control-command-state",
 	"qcom,mdss-dsi-dispparam-pen-others-switch-command-state",
