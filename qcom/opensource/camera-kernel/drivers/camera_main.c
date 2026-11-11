@@ -60,9 +60,6 @@
 #include "cam_tfe_csid.h"
 #include "cam_csid_ppi100.h"
 #include "camera_main.h"
-/*LENOVO_CUSTOM start*/
-#include "cam_power_dev.h"
-/*LENOVO_CUSTOM end*/
 
 #ifndef CAMERA_COMPILE_BY
 #include "cam_generated_h"
@@ -120,7 +117,6 @@ static const struct camera_submodule_component camera_sensor[] = {
 	{&cam_cci_init_module, &cam_cci_exit_module},
 	{&cam_csiphy_init_module, &cam_csiphy_exit_module},
 	{&cam_tpg_init_module, &cam_tpg_exit_module},
-	{&cam_power_driver_init, &cam_power_driver_exit},
 	{&cam_actuator_driver_init, &cam_actuator_driver_exit},
 	{&cam_sensor_driver_init, &cam_sensor_driver_exit},
 	{&cam_eeprom_driver_init, &cam_eeprom_driver_exit},

@@ -37,7 +37,6 @@ extern struct platform_driver cam_sensor_platform_driver;
 extern struct platform_driver cam_eeprom_platform_driver;
 extern struct platform_driver cam_ois_platform_driver;
 extern struct platform_driver cam_tpg_driver;
-extern struct platform_driver cam_power_platform_driver;
 extern struct i2c_driver cam_actuator_i2c_driver;
 extern struct i2c_driver cam_flash_i2c_driver;
 extern struct i2c_driver cam_ois_i2c_driver;
@@ -110,7 +109,6 @@ static struct platform_driver *const cam_component_platform_drivers[] = {
 	&cam_res_mgr_driver,
 	&cci_driver,
 	&csiphy_driver,
-	&cam_power_platform_driver,
 	&cam_actuator_platform_driver,
 	&cam_sensor_platform_driver,
 	&cam_eeprom_platform_driver,

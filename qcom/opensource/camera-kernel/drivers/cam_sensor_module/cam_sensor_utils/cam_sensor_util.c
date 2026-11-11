@@ -11,8 +11,6 @@
 #include "cam_mem_mgr.h"
 #include "cam_res_mgr_api.h"
 
-#include "../cam_power/cam_power_dev.h"
-
 #define CAM_SENSOR_PINCTRL_STATE_SLEEP "cam_suspend"
 #define CAM_SENSOR_PINCTRL_STATE_DEFAULT "cam_default"
 
@@ -2327,21 +2325,6 @@ int cam_sensor_core_power_up(struct cam_sensor_power_ctrl_t *ctrl,
 				goto power_up_failed;
 			}
 			break;
-			case 0xd: case 0xe: case 0xf: case 0x10: //to-do, import and add kirby changes for cam_power_dev
-        	case 0x11: case 0x12: case 0x13: case 0x14:
-			{
-				int ldo_type = power_setting->seq_type - 0xd;
-				rc = kirby_ldo_camera_power_up(ldo_type);
-				if (rc < 0) rc = wl2866d_camera_power_up(ldo_type);
-				if (rc < 0) rc = et5907_camera_power_up(ldo_type);
-				if (rc < 0) rc = lapis_wl2868c_camera_power_up(ldo_type);
-				
-				if (rc < 0) {
-					CAM_ERR(CAM_SENSOR_UTIL, "camera_power_up_io_type failed: %d", power_setting->seq_type);
-					goto power_up_failed;
-				}
-				break;
-			}
 		default:
 			CAM_ERR(CAM_SENSOR_UTIL, "error power seq type %d",
 				power_setting->seq_type);

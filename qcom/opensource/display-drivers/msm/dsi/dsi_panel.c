@@ -727,13 +727,13 @@ int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl,u8 hbm)
 
 	if(hbm) {
 	  rc = lcd_kit_set_brightness(2047);
-	  rh = lcd_kit_enable_hbm(1);
+	  rh = lcd_kit_set_hbm_level(1);
             if(rh < 0) {
 	      rc = -ENOTSUPP;
             }
 	} else {
 	  rc = lcd_kit_set_brightness(bl_lvl);
-	  rh = lcd_kit_enable_hbm(0);
+	  rh = lcd_kit_set_hbm_level(0);
 	}
 #endif
 		break;

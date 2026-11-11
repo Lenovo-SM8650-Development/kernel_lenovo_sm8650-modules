@@ -133,7 +133,7 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 	struct drm_event event;
 	int rc = 0;
 	struct sde_kms *sde_kms;
-	int hbm;
+	int hbm = 0;
 
 	sde_kms = sde_connector_get_kms(&c_conn->base);
 	if (!sde_kms) {
@@ -142,7 +142,6 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 	}
 
 	brightness = bd->props.brightness;
-	hbm = bd->props.hbm;
 
 	if ((bd->props.power != FB_BLANK_UNBLANK) ||
 			(bd->props.state & BL_CORE_FBBLANK) ||
@@ -256,7 +255,6 @@ static int sde_backlight_setup(struct sde_connector *c_conn,
 	props.power = FB_BLANK_UNBLANK;
 	props.max_brightness = bl_config->brightness_max_level;
 	props.brightness = bl_config->brightness_max_level;
-	props.hbm = 0;
 	snprintf(bl_node_name, BL_NODE_NAME_SIZE, "panel%u-backlight",
 							display_count);
 	c_conn->bl_device = backlight_device_register(bl_node_name, dev->dev, c_conn,

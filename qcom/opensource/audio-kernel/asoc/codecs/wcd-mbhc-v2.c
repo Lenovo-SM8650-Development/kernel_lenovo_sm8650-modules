@@ -1855,13 +1855,7 @@ int wcd_mbhc_start(struct wcd_mbhc *mbhc, struct wcd_mbhc_config *mbhc_cfg)
 		dev_dbg(mbhc->component->dev, "%s: usbc analog enabled\n",
 					__func__);
 		mbhc->swap_thr = GND_MIC_USBC_SWAP_THRESHOLD;
-		if (IS_ENABLED(CONFIG_QCOM_WCD_USBSS_I2C))
-			mbhc->aatc_dev_np = of_parse_phandle(card->dev->of_node,
-							"wcd939x-i2c-handle", 0);
-		else if (IS_ENABLED(CONFIG_QCOM_FSA4480_I2C))
-			mbhc->aatc_dev_np = of_parse_phandle(card->dev->of_node,
-							"fsa4480-i2c-handle", 0);
-		if (!mbhc->aatc_dev_np) {
+		if (!mbhc->wcd_usbss_aatc_dev_np && !mbhc->fsa_aatc_dev_np) {
 			dev_err(card->dev, "%s: wcd939x or fsa i2c node not found\n",
 									__func__);
 			rc = -EINVAL;

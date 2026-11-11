@@ -152,24 +152,6 @@ static struct wcd_mbhc_config wcd_mbhc_cfg = {
 	.key_code[2] = KEY_VOLUMEUP,
 	.key_code[3] = KEY_VOLUMEDOWN,
 	.key_code[4] = 0,
-};
-
-/*
- * Need to report LINEIN
- * if R/L channel impedance is larger than 5K ohm
- */
-static struct wcd_mbhc_config wcd_mbhc_cfg = {
-	.read_fw_bin = false,
-	.calibration = NULL,
-	.detect_extn_cable = true,
-	.mono_stero_detection = false,
-	.swap_gnd_mic = NULL,
-	.hs_ext_micbias = true,
-	.key_code[0] = KEY_MEDIA,
-	.key_code[1] = KEY_VOICECOMMAND,
-	.key_code[2] = KEY_VOLUMEUP,
-	.key_code[3] = KEY_VOLUMEDOWN,
-	.key_code[4] = 0,
 	.key_code[5] = 0,
 	.key_code[6] = 0,
 	.key_code[7] = 0,
