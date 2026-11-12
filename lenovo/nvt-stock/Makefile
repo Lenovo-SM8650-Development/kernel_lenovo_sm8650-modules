@@ -15,7 +15,10 @@ all modules:
 	@:
 
 modules_install:
-	@echo "$(STOCK_SHA256)  $(STOCK_MODULE)" | sha256sum -c --quiet
+	@actual=$$(sha256sum $(STOCK_MODULE) | cut -d' ' -f1); \
+	if [ "$$actual" != "$(STOCK_SHA256)" ]; then \
+		echo "nvt-stock: $(STOCK_MODULE) has sha256 $$actual, expected $(STOCK_SHA256)" >&2; exit 1; \
+	fi
 	@targets=$$(find $(INSTALL_MOD_PATH)/lib/modules -type f -name nvt_36xxx.ko); \
 	count=$$(echo "$$targets" | grep -c .); \
 	if [ "$$count" != 1 ]; then \
